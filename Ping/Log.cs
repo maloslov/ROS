@@ -18,26 +18,30 @@ namespace Ping
             {
                 if (!File.Exists(path))
                 {
-                    File.CreateText(path);
+                        File.CreateText(path);
                 }
                 Path = path;
+                writer = File.Open(path,FileMode.Truncate,FileAccess.Write,FileShare.Read);
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
                 return 1;
             }
-            
             return 0;
         }
-        public static int writeLog(string data)
+        public static int writeLog(ref string data)
         {
             try
             {
-                File.Open(Path,FileMode.Open, FileAccess.Write, FileShare.Read);
-                File.WriteAllText(Path,data,Encoding.UTF8);
+                var bdata = Encoding.UTF8.GetBytes(data);
+                writer.Write(bdata, 0, bdata.Length);
             }
-            catch (IOException) { return 1; }
+            catch (IOException e) {
+                Console.WriteLine(e.Message);
+                return 1; 
+            }
+            data = "";
             return 0;
         }
         public static int logDiag()

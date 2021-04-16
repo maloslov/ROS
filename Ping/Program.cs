@@ -6,7 +6,7 @@ namespace Ping
 {
     class Program
     {
-        static string message;
+        static string logdata;
         static Socket socket;
         static ICMP icmp;
         static IPEndPoint remoteEP;
@@ -56,7 +56,7 @@ namespace Ping
         */
         static void Main(string[] args)
         {
-            message = "";
+            logdata = "hhujikuhiujin\n";
             remoteEP = null;
             buffer = new byte[32];
             icmp = new ICMP();
@@ -84,7 +84,7 @@ namespace Ping
                                     {
                                         case 0:
                                             makeReply();
-                                            switch (Log.writeLog(message))
+                                            switch (Log.writeLog(ref logdata))
                                             {
                                                 case 0:
                                                     Finish();
@@ -97,7 +97,7 @@ namespace Ping
                                             break;
                                         case 1:
                                             Diag();
-                                            switch (Log.writeLog(message))
+                                            switch (Log.writeLog(ref logdata))
                                             {
                                                 case 0:
                                                     Finish();
@@ -109,7 +109,7 @@ namespace Ping
                                             }
                                             break;
                                         case 2:
-                                            switch (Log.writeLog(message))
+                                            switch (Log.writeLog(ref logdata))
                                             {
                                                 case 0:
                                                     Finish();
@@ -124,7 +124,7 @@ namespace Ping
                                     break;
                                 case 1:
                                     Diag();
-                                    switch (Log.writeLog(message))
+                                    switch (Log.writeLog(ref logdata))
                                     {
                                         case 0:
                                             Finish();
@@ -136,7 +136,7 @@ namespace Ping
                                     }
                                     break;
                                 case 2:
-                                    switch (Log.writeLog(message))
+                                    switch (Log.writeLog(ref logdata))
                                     {
                                         case 0:
                                             Finish();
@@ -179,7 +179,7 @@ namespace Ping
                     break;
             }
 
-            Console.WriteLine("Начало передачи:");
+            Console.WriteLine("Обмен пакетами:");
             return 0;
         }
         static int makeRequest()
