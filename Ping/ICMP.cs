@@ -17,6 +17,7 @@ namespace Ping
             Message = new byte[32];
             for (int i = 0; i < Message.Length; i++)
                 Message[i] = 1;
+            Checksum = getChecksum();
         }
 
         public ICMP(byte[] data, int size)

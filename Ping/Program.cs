@@ -7,6 +7,12 @@ namespace Ping
     class Program
     {
         static string message;
+        static Socket socket;
+        static ICMP icmp;
+        static IPEndPoint remoteEP;
+        static byte[] buffer;
+        static System.Diagnostics.Stopwatch timer;
+        static string logPath;
         /*
         static void Main(string[] args)
         {
@@ -14,14 +20,14 @@ namespace Ping
             -Console.CursorLeft = 0;
             -var host = IPAddress.Any;
             -Console.Write("Введите адрес хоста: ");
-            --var socket = new Socket(AddressFamily.InterNetwork, SocketType.Raw, ProtocolType.Icmp);
+            \/var socket = new Socket(AddressFamily.InterNetwork, SocketType.Raw, ProtocolType.Icmp);
             \/var remoteEP = new IPEndPoint(IPAddress.Parse(Console.ReadLine()), 0);
-            --socket.ReceiveTimeout = 1000;
-            --socket.Ttl = Convert.ToInt16(Console.ReadLine());
+            \/socket.ReceiveTimeout = 1000;
+            \/socket.Ttl = Convert.ToInt16(Console.ReadLine());
             --var pack = new ICMP();
             --pack.Checksum = pack.getChecksum();
             --Console.WriteLine("Обмен пакетами:");
-            --socket.Bind(new IPEndPoint(host, 0));
+            \/socket.Bind(new IPEndPoint(host, 0));
             --EndPoint point = remoteEP;
             for (int i = 0; i < 1; i++)
             {
@@ -51,22 +57,30 @@ namespace Ping
         static void Main(string[] args)
         {
             message = "";
-            IPEndPoint remoteEP = null;
-            ICMP icmp = new ICMP();
-            Socket socket = null;
-            var logPath = "c:\\Ping\\ping.log";
+            remoteEP = null;
+            buffer = new byte[32];
+            icmp = new ICMP();
+            socket = new Socket(
+                AddressFamily.InterNetwork,
+                SocketType.Raw,
+                ProtocolType.Icmp);
+            socket.Bind(new IPEndPoint(IPAddress.Any, 0));
+            socket.Ttl = 65;
+            socket.ReceiveTimeout = 1000;
+            timer = new System.Diagnostics.Stopwatch();
+            logPath = "c:\\Ping\\ping.log";
 
-            switch (checkParams(args, remoteEP))
+            switch (checkParams(args))
             {
                 case 0:
                     switch (Log.checkLog(logPath))
                     {
                         case 0:
-                            switch (makeRequest(socket, remoteEP))
+                            switch (makeRequest())
                             {
                                 case 0:
                                     makeReply();
-                                    switch (makeRequest(socket, remoteEP))
+                                    switch (makeRequest())
                                     {
                                         case 0:
                                             makeReply();
@@ -146,7 +160,7 @@ namespace Ping
                     break;
             }
         }
-        static int checkParams(string[] param, IPEndPoint remoteEP)
+        static int checkParams(string[] param)
         {
             switch (param.Length)
             {
@@ -165,16 +179,44 @@ namespace Ping
                     break;
             }
 
+            Console.WriteLine("Начало передачи:");
             return 0;
         }
-        static int makeRequest(Socket socket, IPEndPoint remoteEP)
+        static int makeRequest()
         {
-
-
-            return 1;
+            timer.Start();
+            try
+            {
+                socket.SendTo(icmp.getBytes(), SocketFlags.None, remoteEP);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.StackTrace);
+                return 1;
+            }
+            return 0;
         }
-        static void makeReply() { }
-        static void Finish() { Console.ReadKey(); }
+        static void makeReply()
+        {
+            EndPoint ep = remoteEP;
+            var pack = new ICMP(buffer, buffer.Length);
+            var ipfrom = new byte[4];
+            try
+            {
+                socket.ReceiveFrom(buffer, ref ep);
+                timer.Stop();
+            }
+            catch (SocketException e)
+            {
+                Console.WriteLine(e.Message);
+                return;
+            }
+            Buffer.BlockCopy(buffer, 12, ipfrom, 0, 4);
+            Console.WriteLine("Ответ от {0} получен за {1} мс.",
+                new IPAddress(ipfrom).ToString(),
+                timer.ElapsedMilliseconds < 1 ? "<1" : timer.ElapsedMilliseconds.ToString());
+        }
+        static void Finish() { Console.WriteLine("Передача завершена."); }
         static void Diag() { }
     }
 }
