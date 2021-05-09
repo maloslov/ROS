@@ -56,7 +56,7 @@ namespace Ping
         */
         static void Main(string[] args)
         {
-            logdata = "hhujikuhiujin\n";
+            logdata = "Start\n";
             remoteEP = null;
             buffer = new byte[32];
             icmp = new ICMP();
@@ -69,6 +69,7 @@ namespace Ping
             socket.ReceiveTimeout = 1000;
             timer = new System.Diagnostics.Stopwatch();
             logPath = "c:\\Ping\\ping.log";
+
 
             switch (checkParams(args))
             {
@@ -84,68 +85,23 @@ namespace Ping
                                     {
                                         case 0:
                                             makeReply();
-                                            switch (Log.writeLog(ref logdata))
-                                            {
-                                                case 0:
-                                                    Finish();
-                                                    break;
-                                                case 1:
-                                                    Log.logDiag();
-                                                    Finish();
-                                                    break;
-                                            }
+                                            Finish();
                                             break;
                                         case 1:
-                                            Diag();
-                                            switch (Log.writeLog(ref logdata))
-                                            {
-                                                case 0:
-                                                    Finish();
-                                                    break;
-                                                case 1:
-                                                    Log.logDiag();
-                                                    Finish();
-                                                    break;
-                                            }
+                                            Diag();                                            
+                                            Finish();
                                             break;
-                                        case 2:
-                                            switch (Log.writeLog(ref logdata))
-                                            {
-                                                case 0:
-                                                    Finish();
-                                                    break;
-                                                case 1:
-                                                    Log.logDiag();
-                                                    Finish();
-                                                    break;
-                                            }
+                                        case 2:                                            
+                                            Finish();
                                             break;
                                     }
                                     break;
                                 case 1:
                                     Diag();
-                                    switch (Log.writeLog(ref logdata))
-                                    {
-                                        case 0:
-                                            Finish();
-                                            break;
-                                        case 1:
-                                            Log.logDiag();
-                                            Finish();
-                                            break;
-                                    }
+                                    Finish();
                                     break;
                                 case 2:
-                                    switch (Log.writeLog(ref logdata))
-                                    {
-                                        case 0:
-                                            Finish();
-                                            break;
-                                        case 1:
-                                            Log.logDiag();
-                                            Finish();
-                                            break;
-                                    }
+                                    Finish();
                                     break;
                             }
                             break;
@@ -162,6 +118,8 @@ namespace Ping
         }
         static int checkParams(string[] param)
         {
+            Console.WriteLine("Log: {0}", logPath);
+            logdata += "Enter checkParams\n";
             switch (param.Length)
             {
                 case 0:
@@ -173,17 +131,19 @@ namespace Ping
                     }
                     catch (FormatException)
                     {
-                        Console.WriteLine("Wrong IP!");
+                        logdata += param[0]+"is wrong IPv4\nExit checkParams";
                         return 1;
                     }
                     break;
             }
-
-            Console.WriteLine("Обмен пакетами:");
+            logdata += String.Format("{0} is correct IPv4\n", param[0]);
+            logdata += String.Format("TTl={0},Timeout={1}ms\n", socket.Ttl, socket.ReceiveTimeout);
+            logdata += "Exit checkParams\n";
             return 0;
         }
         static int makeRequest()
         {
+            logdata += "Enter makeRequest\n";
             timer.Start();
             try
             {
@@ -191,13 +151,15 @@ namespace Ping
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.StackTrace);
+                logdata+=e.StackTrace+"\nExit makeRequest\n";
                 return 1;
             }
+            logdata += "Request done\nExit makeRequest\n";
             return 0;
         }
         static void makeReply()
         {
+            logdata += "Enter makeReply\n";
             EndPoint ep = remoteEP;
             var pack = new ICMP(buffer, buffer.Length);
             var ipfrom = new byte[4];
@@ -208,15 +170,21 @@ namespace Ping
             }
             catch (SocketException e)
             {
-                Console.WriteLine(e.Message);
+                logdata += (e.Message) + '\n';
                 return;
             }
             Buffer.BlockCopy(buffer, 12, ipfrom, 0, 4);
-            Console.WriteLine("Ответ от {0} получен за {1} мс.",
+            logdata += String.Format("From {0} received by {1} ms\n",
                 new IPAddress(ipfrom).ToString(),
                 timer.ElapsedMilliseconds < 1 ? "<1" : timer.ElapsedMilliseconds.ToString());
+            timer.Reset();
+            logdata += "Reply done\nExit makeReply\n";
         }
-        static void Finish() { Console.WriteLine("Передача завершена."); }
+        static void Finish() 
+        {
+            logdata+="Finish\n";
+            Log.writeLog(ref logdata);
+        }
         static void Diag() { }
     }
 }
