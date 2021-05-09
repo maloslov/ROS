@@ -87,7 +87,10 @@ namespace Ping
                 case 1:
                     try
                     {
-                        remoteEP = new IPEndPoint(IPAddress.Parse(param[0]), 0);
+                        IPAddress ip = IPAddress.Parse(param[0]);
+                        if (ip.AddressFamily == AddressFamily.InterNetwork)
+                            remoteEP = new IPEndPoint(ip, 0);
+                        else throw new FormatException();
                     }
                     catch (FormatException)
                     {
