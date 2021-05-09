@@ -7,31 +7,38 @@ using System.Text;
 
 namespace Ping
 {
-    static class Log
+    class Log
     {
-        private static string Path { get; set; }
-        private static FileStream writer { get; set; }
+        public string Path { get; private set; }
+        private FileStream writer { get; set; }
+        public bool canWrite = false;
         
-        public static int checkLog(string path)
+        public Log(string path)
+        {
+            Path = path;
+        }
+        public int checkLog()
         {
             try
             {
-                if (!File.Exists(path))
+                if (!File.Exists(Path))
                 {
-                        File.CreateText(path);
+                        File.CreateText(Path);
                 }
-                Path = path;
-                writer = File.Open(path,FileMode.Truncate,FileAccess.Write,FileShare.Read);
+                writer = File.Open(Path,FileMode.Truncate,FileAccess.Write,FileShare.Read);
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
                 return 1;
             }
+            canWrite = true;
             return 0;
         }
-        public static int writeLog(ref string data)
+        public int writeLog(ref string data)
         {
+            if (!writer.CanWrite)
+                Console.WriteLine(data);
             try
             {
                 var bdata = Encoding.UTF8.GetBytes(data);
