@@ -12,48 +12,8 @@ namespace Ping
         static IPEndPoint remoteEP;
         static byte[] buffer;
         static System.Diagnostics.Stopwatch timer;
-        static string logPath;
-        /*
-        static void Main(string[] args)
-        {
-        Begin:
-            -Console.CursorLeft = 0;
-            -var host = IPAddress.Any;
-            -Console.Write("Введите адрес хоста: ");
-            \/var socket = new Socket(AddressFamily.InterNetwork, SocketType.Raw, ProtocolType.Icmp);
-            \/var remoteEP = new IPEndPoint(IPAddress.Parse(Console.ReadLine()), 0);
-            \/socket.ReceiveTimeout = 1000;
-            \/socket.Ttl = Convert.ToInt16(Console.ReadLine());
-            --var pack = new ICMP();
-            --pack.Checksum = pack.getChecksum();
-            --Console.WriteLine("Обмен пакетами:");
-            \/socket.Bind(new IPEndPoint(host, 0));
-            --EndPoint point = remoteEP;
-            for (int i = 0; i < 1; i++)
-            {
-                var timer = System.Diagnostics.Stopwatch.StartNew();
-                socket.SendTo(pack.getBytes(), SocketFlags.None, remoteEP);
-                byte[] buffer = new byte[32];
-                try
-                {
-                    socket.ReceiveFrom(buffer, ref point);
-                    Console.WriteLine(BitConverter.ToString(buffer));
-                }
-                catch (SocketException e)
-                {
-                    Console.WriteLine("{0} Error code: {1}", e.Message, e.ErrorCode);
-                }
-                timer.Stop();
-                var pack2 = new ICMP(buffer, buffer.Length);
-                var ipfrom = new byte[4];
-                Buffer.BlockCopy(buffer, 12, ipfrom, 0, 4);
-                Console.Write("Ответ от " + new IPAddress(ipfrom).ToString());
-                Console.WriteLine(" за " + timer.ElapsedMilliseconds + " мс.");
-                }
-            if(Console.ReadKey().Key==ConsoleKey.Spacebar)
-                goto Begin;
-        }
-        */
+        static Log log;
+        
         static void Main(string[] args)
         {
             logdata = "Start\n";
@@ -68,13 +28,12 @@ namespace Ping
             socket.Ttl = 65;
             socket.ReceiveTimeout = 1000;
             timer = new System.Diagnostics.Stopwatch();
-            logPath = "c:\\Ping\\ping.log";
+            log = new Log("c:\\Ping\\ping.log");
 
-
-            switch (checkParams(args))
+            switch (log.checkLog())
             {
                 case 0:
-                    switch (Log.checkLog(logPath))
+                    switch (checkParams(args))
                     {
                         case 0:
                             switch (makeRequest())
@@ -88,10 +47,10 @@ namespace Ping
                                             Finish();
                                             break;
                                         case 1:
-                                            Diag();                                            
+                                            Diag();
                                             Finish();
                                             break;
-                                        case 2:                                            
+                                        case 2:
                                             Finish();
                                             break;
                                     }
@@ -106,19 +65,19 @@ namespace Ping
                             }
                             break;
                         case 1:
-                            Log.logDiag();
                             Finish();
                             break;
                     }
                     break;
                 case 1:
+                    Log.logDiag();
                     Finish();
                     break;
             }
         }
         static int checkParams(string[] param)
         {
-            Console.WriteLine("Log: {0}", logPath);
+            Console.WriteLine("Log: {0}", log.Path);
             logdata += "Enter checkParams\n";
             switch (param.Length)
             {
@@ -131,12 +90,12 @@ namespace Ping
                     }
                     catch (FormatException)
                     {
-                        logdata += param[0]+"is wrong IPv4\nExit checkParams";
+                        logdata += param[0]+" is wrong IPv4\nExit checkParams\n";
                         return 1;
                     }
                     break;
             }
-            logdata += String.Format("{0} is correct IPv4\n", param[0]);
+            logdata += String.Format(param[0]+" is correct IPv4\n");
             logdata += String.Format("TTl={0},Timeout={1}ms\n", socket.Ttl, socket.ReceiveTimeout);
             logdata += "Exit checkParams\n";
             return 0;
@@ -182,8 +141,8 @@ namespace Ping
         }
         static void Finish() 
         {
-            logdata+="Finish\n";
-            Log.writeLog(ref logdata);
+            logdata += "Finish\n";
+            log.writeLog(ref logdata);
         }
         static void Diag() { }
     }
