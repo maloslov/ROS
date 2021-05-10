@@ -37,7 +37,7 @@ namespace Ping
         }
         public int writeLog(ref string data)
         {
-            if (writer != null || !writer.CanWrite)
+            if (writer == null || !writer.CanWrite)
                 Console.WriteLine(data);
             try
             {
@@ -51,7 +51,7 @@ namespace Ping
             data = "";
             return 0;
         }
-        public static int logDiag()
+        public int logDiag()
         {
 
             return 1;

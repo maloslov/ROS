@@ -1,25 +1,32 @@
-﻿using System;
+﻿//LIBRARIES
+using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Diagnostics;
 
 namespace Ping
 {
     class Program
     {
-        static string logdata;
-        static Socket socket;
-        static ICMP icmp;
-        static IPEndPoint remoteEP;
-        static byte[] buffer;
-        static System.Diagnostics.Stopwatch timer;
-        static Log log;
+        //DECLARATION
+        static string logdata;      //текст для записи
+        static Socket socket;       //сокет для приема и передачи
+        static ICMP icmp;           //сборщик icmp-сообщений
+        static IPEndPoint remoteEP; //проверяемый хост
+        static byte[] buffer;       //буфер для icmp
+        static Stopwatch timer;     //секундомер
+        static Log log;             //журнал
+        static int numReq;          //Количество запросов
         
         static void Main(string[] args)
         {
+            //RESTRICTIONS & DEFAULTS
             logdata = "Start\n";
             remoteEP = null;
             buffer = new byte[32];
             icmp = new ICMP();
+            timer = new Stopwatch();
+            log = new Log("c:\\Ping\\ping.log");
             socket = new Socket(
                 AddressFamily.InterNetwork,
                 SocketType.Raw,
@@ -27,42 +34,35 @@ namespace Ping
             socket.Bind(new IPEndPoint(IPAddress.Any, 0));
             socket.Ttl = 65;
             socket.ReceiveTimeout = 1000;
-            timer = new System.Diagnostics.Stopwatch();
-            log = new Log("c:\\Ping\\ping.log");
+            numReq = 2;
 
+            //PROGRAM
             switch (log.checkLog())
             {
                 case 0:
                     switch (checkParams(args))
                     {
                         case 0:
-                            switch (makeRequest())
+                            for(int i = 0; i < numReq; i++)
                             {
-                                case 0:
-                                    makeReply();
-                                    switch (makeRequest())
-                                    {
-                                        case 0:
-                                            makeReply();
-                                            Finish();
-                                            break;
-                                        case 1:
-                                            Diag();
-                                            Finish();
-                                            break;
-                                        case 2:
-                                            Finish();
-                                            break;
-                                    }
-                                    break;
-                                case 1:
-                                    Diag();
-                                    Finish();
-                                    break;
-                                case 2:
-                                    Finish();
-                                    break;
+                                switch (makeRequest())
+                                {
+                                    case 0:
+                                        switch (makeReply())
+                                        {
+                                            case 0:
+                                                break;
+                                            case 1:
+                                                Diag();
+                                                break;
+                                        }
+                                        break;
+                                    case 1:
+                                        Diag();
+                                        break;
+                                }
                             }
+                            Finish();
                             break;
                         case 1:
                             Finish();
@@ -70,7 +70,7 @@ namespace Ping
                     }
                     break;
                 case 1:
-                    Log.logDiag();
+                    log.logDiag();
                     Finish();
                     break;
             }
@@ -120,7 +120,7 @@ namespace Ping
             logdata += "Request done\nExit makeRequest\n";
             return 0;
         }
-        static void makeReply()
+        static int makeReply()
         {
             logdata += "Enter makeReply\n";
             EndPoint ep = remoteEP;
@@ -134,7 +134,7 @@ namespace Ping
             catch (SocketException e)
             {
                 logdata += (e.Message) + '\n';
-                return;
+                return 1;
             }
             Buffer.BlockCopy(buffer, 12, ipfrom, 0, 4);
             logdata += String.Format("From {0} received by {1} ms\n",
@@ -142,6 +142,7 @@ namespace Ping
                 timer.ElapsedMilliseconds < 1 ? "<1" : timer.ElapsedMilliseconds.ToString());
             timer.Reset();
             logdata += "Reply done\nExit makeReply\n";
+            return 0;
         }
         static void Finish() 
         {
