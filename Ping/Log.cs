@@ -51,7 +51,7 @@ namespace Ping
             data = "";
             return 0;
         }
-        public static int logDiag()
+        public int logDiag()
         {
 
             return 1;

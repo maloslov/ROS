@@ -1,25 +1,30 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Diagnostics;
 
 namespace Ping
 {
     class Program
     {
-        static string logdata;
-        static Socket socket;
-        static ICMP icmp;
-        static IPEndPoint remoteEP;
-        static byte[] buffer;
-        static System.Diagnostics.Stopwatch timer;
-        static Log log;
+        //DECLARATION
+        static string logdata;      //текст для записи
+        static Socket socket;       //сокет для приема и передачи
+        static ICMP icmp;           //сборщик icmp-сообщений
+        static IPEndPoint remoteEP; //проверяемый хост
+        static byte[] buffer;       //буфер для icmp
+        static Stopwatch timer;     //секундомер
+        static Log log;             //журнал
         
         static void Main(string[] args)
         {
+            //RESTRICTIONS & DEFAULTS
             logdata = "Start\n";
             remoteEP = null;
             buffer = new byte[32];
             icmp = new ICMP();
+            timer = new Stopwatch();
+            log = new Log("c:\\Ping\\ping.log");
             socket = new Socket(
                 AddressFamily.InterNetwork,
                 SocketType.Raw,
@@ -27,9 +32,8 @@ namespace Ping
             socket.Bind(new IPEndPoint(IPAddress.Any, 0));
             socket.Ttl = 65;
             socket.ReceiveTimeout = 1000;
-            timer = new System.Diagnostics.Stopwatch();
-            log = new Log("c:\\Ping\\ping.log");
 
+            //PROGRAM
             switch (log.checkLog())
             {
                 case 0:
@@ -59,9 +63,6 @@ namespace Ping
                                     Diag();
                                     Finish();
                                     break;
-                                case 2:
-                                    Finish();
-                                    break;
                             }
                             break;
                         case 1:
@@ -70,7 +71,7 @@ namespace Ping
                     }
                     break;
                 case 1:
-                    Log.logDiag();
+                    log.logDiag();
                     Finish();
                     break;
             }
