@@ -62,18 +62,16 @@ namespace Ping
                                         break;
                                 }
                             }
-                            Finish();
                             break;
                         case 1:
-                            Finish();
                             break;
                     }
                     break;
                 case 1:
                     log.logDiag();
-                    Finish();
                     break;
             }
+            Finish();
         }
         static int checkParams(string[] param)
         {
