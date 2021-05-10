@@ -35,19 +35,21 @@ namespace Ping
             canWrite = true;
             return 0;
         }
-        public int writeLog(ref string data)
+        public int writeLog(ref string data, int outFlag)
         {
-            if (writer == null || !writer.CanWrite)
+            if (writer == null || !writer.CanWrite || outFlag > 1)
                 Console.WriteLine(data);
-            try
-            {
-                var bdata = Encoding.UTF8.GetBytes(data);
-                writer.Write(bdata, 0, bdata.Length);
-            }
-            catch (IOException e) {
-                Console.WriteLine(e.Message);
-                return 1; 
-            }
+            else if (outFlag < 3)
+                try
+                {
+                    var bdata = Encoding.UTF8.GetBytes(data);
+                    writer.Write(bdata, 0, bdata.Length);
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                    return 1;
+                }
             data = "";
             return 0;
         }
