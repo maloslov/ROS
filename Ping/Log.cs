@@ -39,7 +39,7 @@ namespace Ping
         {
             if (writer == null || outFlag > 1)
                 Console.WriteLine(data);
-            else if (writer != null && !writer.CanWrite || outFlag > 1)
+            else if ((writer != null && !writer.CanWrite) || outFlag > 1)
                 Console.WriteLine(data);
             else if (outFlag < 3)
                 try
