@@ -17,7 +17,7 @@ namespace Ping
         {
             Path = path;
         }
-        public int checkLog()
+        public int checkLog(ref string data)
         {
             try
             {
@@ -29,7 +29,7 @@ namespace Ping
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                data += "Cannot access file\r\n";
                 return 1;
             }
             canWrite = true;
@@ -37,7 +37,9 @@ namespace Ping
         }
         public int writeLog(ref string data, int outFlag)
         {
-            if (writer == null || !writer.CanWrite || outFlag > 1)
+            if (writer == null || outFlag > 1)
+                Console.WriteLine(data);
+            else if (writer != null && !writer.CanWrite || outFlag > 1)
                 Console.WriteLine(data);
             else if (outFlag < 3)
                 try
@@ -47,7 +49,7 @@ namespace Ping
                 }
                 catch (IOException e)
                 {
-                    Console.WriteLine(e.Message);
+                    Console.WriteLine("Cannot write file\r\n" + data);
                     return 1;
                 }
             data = "";

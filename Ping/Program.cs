@@ -42,7 +42,7 @@ namespace Ping
             switch (checkParams(args))
             {
                 case 0:
-                    switch (log.checkLog())
+                    switch (log.checkLog(ref logdata))
                     {
                         case 0:
                             for (int i = 0; i < numReq; i++)
@@ -71,7 +71,7 @@ namespace Ping
                     }
                     break;
                 case 1:
-                    switch (log.checkLog())
+                    switch (log.checkLog(ref logdata))
                     {
                         case 1:
                             log.logDiag();
@@ -107,17 +107,30 @@ namespace Ping
                     }
                     goto case 1;
                 case 1:
-                    try
+                    switch (param[0])
                     {
-                        IPAddress ip = IPAddress.Parse(param[0]);
-                        if (ip.AddressFamily == AddressFamily.InterNetwork)
-                            remoteEP = new IPEndPoint(ip, 0);
-                        else throw new FormatException();
-                    }
-                    catch (FormatException)
-                    {
-                        logdata += param[0] + " is wrong IPv4\r\n";
-                        errCount++;
+                        case "-b":
+                            outFlag = 2;
+                            errCount++;
+                            break;
+                        case "-c":
+                            outFlag = 3;
+                            errCount++;
+                            break;
+                        default:
+                            try
+                            {
+                                IPAddress ip = IPAddress.Parse(param[0]);
+                                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                                    remoteEP = new IPEndPoint(ip, 0);
+                                else throw new FormatException();
+                            }
+                            catch (FormatException)
+                            {
+                                logdata += param[0] + " is wrong IPv4\r\n";
+                                errCount++;
+                            }
+                            break;
                     }
                     break;
                 default:
@@ -126,6 +139,7 @@ namespace Ping
             }
             if (remoteEP != null)
                 logdata += String.Format(param[0] + " is correct IPv4\r\n");
+            else logdata += "No IP argument\r\n";
             if (errCount > 0) { logdata += "Exit checkParams\r\n"; return 1; }
             logdata += String.Format("TTl={0},Timeout={1}ms\r\n", socket.Ttl, socket.ReceiveTimeout);
             logdata += "Exit checkParams\r\n";
@@ -169,7 +183,16 @@ namespace Ping
             }
             catch (SocketException e)
             {
-                logdata += (e.Message) + "\r\n";
+                switch (e.ErrorCode)
+                {
+                    case 10060:
+                        logdata += "Reply timeout exceeded\r\n";
+                        break;
+                    default:
+                        logdata += e.Message + "\r\n";
+                        break;
+                }
+                logdata += "Exit makeReply\r\n";
                 return 1;
             }
             Buffer.BlockCopy(buffer, 12, ipfrom, 0, 4);
@@ -184,7 +207,7 @@ namespace Ping
         {
             logdata += "Finish\r\n";
             log.writeLog(ref logdata, outFlag);
-            Console.ReadKey();
+            //Console.ReadKey();
         }
         static void Diag() { }
     }
