@@ -37,7 +37,9 @@ namespace Ping
         }
         public int writeLog(ref string data, int outFlag)
         {
-            if (writer == null || !writer.CanWrite || outFlag > 1)
+            if (writer == null || outFlag > 1)
+                Console.WriteLine(data);
+            else if (writer != null && !writer.CanWrite || outFlag > 1)
                 Console.WriteLine(data);
             else if (outFlag < 3)
                 try
