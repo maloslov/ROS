@@ -151,6 +151,7 @@ namespace Ping
             {
                 case 0:
                     logdata += "Выход из checkParams с кодом 1\r\n";//DEBUG
+                    errorCode = 2;
                     return 1;
                 case 1:
                     try
