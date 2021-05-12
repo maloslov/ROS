@@ -22,26 +22,11 @@ namespace Ping
         public int checkLog(ref string data, ref int errorCode)
         {
             data += "Вход в checkLog\r\n";                      //DEBUG
-            try
+            if (!File.Exists(Path))
             {
-                if (!File.Exists(Path))
-                {
-                    errorCode = 3;
-                    data += "Выход из checkLog с кодом 1\r\n";  //DEBUG
-                    return 1;
-                }
-                /*
-                writer = File.Open(Path
-                    ,FileMode.Truncate
-                    ,FileAccess.Write
-                    ,FileShare.Read);
-                */
-            }
-            catch (Exception e)
-            {
-                errorCode = e.GetHashCode();
-                data += "Файл журнала недоступен\r\n";
-                return 1;
+                errorCode = 1;
+                data += "Выход из checkLog с кодом 1\r\n";  //DEBUG
+                return 11;
             }
             canWrite = true;
             data += "Выход из checkLog с кодом 0\r\n";          //DEBUG
@@ -55,7 +40,7 @@ namespace Ping
             }
             catch(Exception e)
             {
-                errorCode = 1;
+                errorCode = 12;
                 //data += "Не удалось создать файл\r\n";          //DEBUG
                 return 1;
             }
@@ -80,13 +65,13 @@ namespace Ping
             }
             if (writer == null)
             {
-                errorCode = 10;
+                errorCode = 14;
                 data += "Запись в файл не удалась\r\n";         //DEBUG
                 return 1;
             }
             else if ((writer != null && !canWrite))
             {
-                errorCode = 11;
+                errorCode = 14;
                 data += "Запись в файл не возможна\r\n";        //DEBUG
                 return 1;
             }
@@ -97,14 +82,32 @@ namespace Ping
             }
             catch (IOException e)
             {
-                errorCode = e.GetHashCode();
+                errorCode = 15;
                 return 1;
             }
             return 0;
         }
         public void logDiag(ref int errorCode, ref string data)
         {
-            data += String.Format("Причина: ошибка №{0}", errorCode);
+            data += String.Format("Причина: ошибка №{0}:\r\n", errorCode);
+            switch (errorCode)
+            {
+                case 11:
+                    data += "Файл отсутствует\r\n";
+                    break;
+                case 12:
+                    data += "Не удалось создать файл\r\n";
+                    break;
+                case 13:
+                    data += "Не удалось открыть файл\r\n";
+                    break;
+                case 14:
+                    data += "Запись в файл недоступна\r\n";
+                    break;
+                case 15:
+                    data += "Ошибка при записи в файл\r\n";
+                    break;
+            }
         }
     }
 }
