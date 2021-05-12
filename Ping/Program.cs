@@ -196,16 +196,16 @@ namespace Ping
                     }
                     catch (FormatException e)
                     {
-                        errorCode = e.GetHashCode();
-                        logdata += "Адрес "+param[0] + " не соответствует IPv4\r\n"
-                            +"Выход из checkParams с кодом 1\r\n";  //DEBUG
+                        errorCode = 2;
+                        logdata += //"Адрес "+param[0] + " не соответствует IPv4\r\n"+
+                            "Выход из checkParams с кодом 1\r\n";  //DEBUG
                         return 1;
                     }
                     break;
                 default:
                     logdata += "Слишком много аргументов\r\n";
                     logdata += "Выход из checkParams с кодом 1\r\n";//DEBUG
-                    errorCode = 6;
+                    errorCode = 3;
                     return 1;
             }
             if (remoteEP != null)
@@ -224,11 +224,11 @@ namespace Ping
             }
             catch (SocketException e)
             {
-                errorCode = e.GetHashCode();
+                errorCode = 5;
                 switch (e.ErrorCode)
                 {
                     case 10065:
-                        logdata += "Недостижимый хост\r\n";
+                        //logdata += "Недостижимый хост\r\n";
                         break;
                     default:
                         logdata += e.Message+"\r\n";
@@ -257,11 +257,11 @@ namespace Ping
             }
             catch (SocketException e)
             {
-                errorCode = e.ErrorCode;
+                errorCode = 4;
                 switch (e.ErrorCode)
                 {
                     case 10060:
-                        logdata+="Время ожидания ответа истекло\r\n";
+                        //logdata+="Время ожидания ответа истекло\r\n";
                         break;
                     default:
                         logdata += e.Message + "\r\n";
@@ -284,7 +284,25 @@ namespace Ping
         }
         static void Diag()
         {
-            logdata += String.Format("Причина: ошибка №{0}\r\n", errorCode);
+            logdata += String.Format("Причина: ошибка №{0} - ", errorCode);
+            switch (errorCode)
+            {
+                case 1:
+                    logdata += "Отсутствует параметр\r\n";
+                    break;
+                case 2:
+                    logdata += "Некорректный параметр\r\n";
+                    break;
+                case 3:
+                    logdata += "Избыток параметров\r\n";
+                    break;
+                case 4:
+                    logdata += "Время ожидания ответа истекло\r\n";
+                    break;
+                case 5:
+                    logdata += "Ошибка отправки запроса\r\n";
+                    break;
+            }
         }
     }
 }
