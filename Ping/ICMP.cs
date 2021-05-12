@@ -4,6 +4,7 @@ namespace Ping
 {
     class ICMP
     {
+        //ДЕКАРАЦИЯ ПЕРЕМЕННЫХ
         public byte Type;
         public byte Code;
         public UInt16 Checksum;
@@ -12,6 +13,7 @@ namespace Ping
 
         public ICMP()
         {
+            //ИНИЦИАЛИЗАЦИЯ ПЕРЕМЕННЫХ
             Type = 8;
             Code = 0;
             Message = new byte[32];
@@ -22,6 +24,7 @@ namespace Ping
 
         public ICMP(byte[] data, int size)
         {
+            //ИНИЦИАЛИЗАЦИЯ ПЕРЕМЕННЫХ
             Type = data[20];
             Code = data[21];
             Checksum = BitConverter.ToUInt16(data, 22);
@@ -32,7 +35,11 @@ namespace Ping
 
         public byte[] getBytes()
         {
-            byte[] data = new byte[MessageSize + 9];
+            //декларация переменных
+            byte[] data;
+            //инициализация переменных
+            data = new byte[MessageSize + 9];
+            //ТЕЛО ПРОЦЕДУРЫ
             Buffer.BlockCopy(BitConverter.GetBytes(Type), 0, data, 0, 1);
             Buffer.BlockCopy(BitConverter.GetBytes(Code), 0, data, 1, 1);
             Buffer.BlockCopy(BitConverter.GetBytes(Checksum), 0, data, 2, 2);
@@ -42,11 +49,17 @@ namespace Ping
 
         public UInt16 getChecksum()
         {
-            UInt32 chcksm = 0;
-            byte[] data = getBytes();
-            int packetsize = MessageSize + 8;
-            int index = 0;
-
+            //ДЕКЛАРАЦИЯ ПЕРЕМЕННЫХ
+            UInt32 chcksm;
+            byte[] data;
+            int packetsize;
+            int index;
+            //ИНИЦИАЛИЗАЦИЯ ПЕРЕМЕННЫХ
+            chcksm = 0;
+            data = getBytes();
+            packetsize = MessageSize + 8;
+            index = 0;
+            //ТЕЛО ПРОЦЕДУРЫ
             while (index < packetsize)
             {
                 chcksm += Convert.ToUInt32(BitConverter.ToUInt16(data, index));

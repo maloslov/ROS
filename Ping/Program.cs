@@ -179,14 +179,14 @@ namespace Ping
         {
             Console.WriteLine("Файл журнала: {0}", log.Path);
             logdata += "Вход в checkParams\r\n";                    //DEBUG
-            switch (param.Length)
+            switch (param.Length)                                   //проверка параметра
             {
-                case 0:
+                case 0:                                             //параметра нет
                     logdata += "Отсутствует входной параметр\r\n";
                     logdata += "Выход из checkParams с кодом 1\r\n";//DEBUG
                     errorCode = 1;
                     return 1;
-                case 1:
+                case 1:                                             //параметр есть
                     try
                     {
                         IPAddress ip = IPAddress.Parse(param[0]);
@@ -202,7 +202,7 @@ namespace Ping
                         return 1;
                     }
                     break;
-                default:
+                default:                                            //параметров много
                     logdata += "Слишком много аргументов\r\n";
                     logdata += "Выход из checkParams с кодом 1\r\n";//DEBUG
                     errorCode = 3;
@@ -228,7 +228,6 @@ namespace Ping
                 switch (e.ErrorCode)
                 {
                     case 10065:
-                        //logdata += "Недостижимый хост\r\n";
                         break;
                     default:
                         logdata += e.Message+"\r\n";

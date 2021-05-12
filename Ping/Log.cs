@@ -25,7 +25,7 @@ namespace Ping
             if (!File.Exists(Path))
             {
                 errorCode = 1;
-                data += "Выход из checkLog с кодом 1\r\n";  //DEBUG
+                data += "Выход из checkLog с кодом 1\r\n";      //DEBUG
                 return 11;
             }
             canWrite = true;
