@@ -67,8 +67,19 @@ namespace Ping
                                         Diag();              //диагностика
                                         break;
                                 }
-                            }
-                            Finish();                        //завершение
+                            }                      
+                            switch (log.writeLog(ref logdata
+                                , ref logErrorCode))  //запись в журнал
+                            {
+                                case 0:
+                                    Finish();         //завершение
+                                    break;
+                                case 1:
+                                    log.logDiag(ref logErrorCode
+                                        , ref logdata);//диагностика журнала
+                                    Finish();         //завершение
+                                    break;
+                            }                       //завершение
                             break;
                         case 1:                              //файл журнала отсутствует
                             switch (log.createLog())         //создание файла
@@ -171,7 +182,8 @@ namespace Ping
                     break;
                 default:
                     logdata += "Слишком много аргументов\r\n";
-                    logdata += "Выход из checkParams с кодом 0\r\n";//DEBUG
+                    logdata += "Выход из checkParams с кодом 1\r\n";//DEBUG
+                    errorCode = 6;
                     return 1;
             }
             if (remoteEP != null)
@@ -204,7 +216,7 @@ namespace Ping
                 return 1;
             }
             logdata += "Запрос отправлен\r\n"
-                +"Выход из makeRequest с кодом 1\r\n";              //DEBUG
+                +"Выход из makeRequest с кодом 0\r\n";              //DEBUG
             return 0;
         }
         static int makeReply()
