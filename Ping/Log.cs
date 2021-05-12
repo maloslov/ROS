@@ -1,34 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
+﻿//ДЕКЛАРАЦИЯ БИБЛИОТЕК
+using System;
 using System.IO;
-using System.Linq;
-using System.Security.AccessControl;
 using System.Text;
 
 namespace Ping
 {
     class Log
     {
+        //декларация переменных
         public string Path { get; private set; }
         private FileStream writer { get; set; }
-        public bool canWrite = false;
+        public bool canWrite;
         
         public Log(string path)
         {
+            //ИНИЦИАЛИЗАЦИЯ ПЕРЕМЕННЫХ
             Path = path;
+            canWrite = false;
+            writer = null;
         }
         public int checkLog(ref string data, ref int errorCode)
         {
-            data += "Вход в checkLog\r\n";
+            data += "Вход в checkLog\r\n";                      //DEBUG
             try
             {
                 if (!File.Exists(Path))
                 {
                     errorCode = 3;
-                    data += "Выход из checkLog с кодом 1\r\n";
+                    data += "Выход из checkLog с кодом 1\r\n";  //DEBUG
                     return 1;
                 }
-                writer = File.Open(Path,FileMode.Truncate,FileAccess.Write,FileShare.Read);
+                writer = File.Open(Path
+                    ,FileMode.Truncate
+                    ,FileAccess.Write
+                    ,FileShare.Read);
             }
             catch (Exception e)
             {
@@ -37,7 +42,7 @@ namespace Ping
                 return 1;
             }
             canWrite = true;
-            data += "Выход из checkLog с кодом 0\r\n";
+            data += "Выход из checkLog с кодом 0\r\n";          //DEBUG
             return 0;
         }
         public int createLog()
@@ -47,7 +52,8 @@ namespace Ping
         }
         public int writeLog(ref string data, ref int errorCode)
         {
-                Console.WriteLine(data);
+            //Console.WriteLine(data);
+            data += "Запись в файл журнала\r\n";                //DEBUG
             if (writer == null)
             {
                 errorCode = 1;
@@ -66,18 +72,13 @@ namespace Ping
             catch (IOException e)
             {
                 errorCode = e.GetHashCode();
-                Console.WriteLine("Запись в файл журнала недоступна\r\n" + data);
                 return 1;
             }
             return 0;
         }
-        public void logDiag(ref int errorCode)
+        public void logDiag(ref int errorCode, ref string data)
         {
-            Console.WriteLine("Причина: ошибка №{0}", errorCode);
-            //switch (errorCode)
-            {
-
-            }
+            data += String.Format("Причина: ошибка №{0}", errorCode);
         }
     }
 }

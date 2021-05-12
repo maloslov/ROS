@@ -1,4 +1,4 @@
-﻿//LIBRARIES
+﻿//ДЕКЛАРАЦИЯ БИБЛИОТЕК
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -20,6 +20,7 @@ namespace Ping
         static int errorCode;       //переменная для записи ошибок
         static int logErrorCode;    //ошибки журнала
         
+        //процедуры
         static void Main(string[] args)
         {
             //ИНИЦИАЛИЗАЦИЯ ПЕРЕМЕННЫХ
@@ -69,22 +70,74 @@ namespace Ping
                             }
                             Finish();                       //завершение
                             break;
-                        case 1:                             //ошибка 
-                            log.logDiag(ref logErrorCode);  
-                            Finish();
+                        case 1:                             //файл журнала отсутствует
+                            switch (log.createLog())        //создание файла
+                            {
+                                case 0:                     //файл существует
+                                    switch (log.writeLog(ref logdata
+                                        ,ref logErrorCode))//запись в журнал
+                                    {
+                                        case 0:
+                                            Finish();       //завершение
+                                            break;
+                                        case 1:
+                                            log.logDiag(ref logErrorCode
+                                                ,ref logdata);//диагностика журнала
+                                            Finish();         //завершение
+                                            break;
+                                    }
+                                break;
+                                case 1:                     //ошибка создания файла
+                                    log.logDiag(ref logErrorCode
+                                        ,ref logdata);      //диагностика журнала 
+                                    Finish();               //завершение
+                                break;
+                            }                        
                             break;
                     }
                     break;
-                case 1:
-                    Diag();
-                    switch (log.checkLog(ref logdata, ref logErrorCode))
+                case 1:                                     //ошибка параметров
+                    Diag();                                 //диагностика
+                    switch (log.checkLog(ref logdata
+                        , ref logErrorCode))                 //проверка файла журнала
                     {
-                        case 0:
-                            Finish();
+                        case 0:                     //файл существует
+                            switch (log.writeLog(ref logdata
+                                , ref logErrorCode))//запись в журнал
+                            {
+                                case 0:
+                                    Finish();       //завершение
+                                    break;
+                                case 1:
+                                    log.logDiag(ref logErrorCode
+                                        , ref logdata);//диагностика журнала
+                                    Finish();         //завершение
+                                    break;
+                            }
                             break;
-                        case 1:
-                            log.logDiag(ref logErrorCode);
-                            Finish();
+                        case 1:                             //файл журнала отсутствует
+                            switch (log.createLog())        //создание файла
+                            {
+                                case 0:                     //файл создан
+                                    switch (log.writeLog(ref logdata
+                                        , ref logErrorCode))//запись в журнал
+                                    {
+                                        case 0:
+                                            Finish();       //завершение
+                                            break;
+                                        case 1:
+                                            log.logDiag(ref logErrorCode
+                                                , ref logdata);//диагностика журнала
+                                            Finish();         //завершение
+                                            break;
+                                    }
+                                    break;
+                                case 1:                     //ошибка создания файла
+                                    log.logDiag(ref logErrorCode
+                                        , ref logdata);      //диагностика журнала 
+                                    Finish();               //завершение
+                                    break;
+                            }
                             break;
                     }
                     break;
@@ -93,11 +146,11 @@ namespace Ping
         static int checkParams(string[] param)
         {
             Console.WriteLine("Файл журнала: {0}", log.Path);
-            logdata += "Вход в checkParams\r\n";
+            logdata += "Вход в checkParams\r\n";                    //DEBUG
             switch (param.Length)
             {
                 case 0:
-                    logdata += "Выход из checkParams с кодом 1\r\n";
+                    logdata += "Выход из checkParams с кодом 1\r\n";//DEBUG
                     return 1;
                 case 1:
                     try
@@ -110,25 +163,25 @@ namespace Ping
                     catch (FormatException e)
                     {
                         errorCode = e.GetHashCode();
-                        logdata += "Адрес "+param[0] + " не соответствует IPv4\r\n";
-                        logdata += "Выход из checkParams с кодом 1\r\n"; 
+                        logdata += "Адрес "+param[0] + " не соответствует IPv4\r\n"
+                            +"Выход из checkParams с кодом 1\r\n";  //DEBUG
                         return 1;
                     }
                     break;
                 default:
                     logdata += "Слишком много аргументов\r\n";
-                    logdata += "Выход из checkParams с кодом 1\r\n";
+                    logdata += "Выход из checkParams с кодом 1\r\n";//DEBUG
                     return 1;
             }
             if (remoteEP != null)
                 logdata += String.Format(param[0] + " корректный IPv4\r\n");
             logdata += String.Format("ТТЛ={0},Время ожидания ответа={1}ms\r\n", socket.Ttl, socket.ReceiveTimeout);
-            logdata += "Выход из checkParams с кодом 0\r\n";
+            logdata += "Выход из checkParams с кодом 0\r\n";        //DEBUG
             return 0;
         }
         static int makeRequest()
         {
-            logdata += "Вход в makeRequest\r\n";
+            logdata += "Вход в makeRequest\r\n";                    //DEBUG
             timer.Start();
             try
             {
@@ -146,20 +199,21 @@ namespace Ping
                         logdata += e.Message+"\r\n";
                         break;
                 }
-                logdata += "Выход из makeRequest с кодом 1\r\n";
+                logdata += "Выход из makeRequest с кодом 1\r\n";    //DEBUG
                 return 1;
             }
-            logdata += "Запрос отправлен\r\nВыход из makeRequest с кодом\r\n";
+            logdata += "Запрос отправлен\r\n"
+                +"Выход из makeRequest с кодом 1\r\n";              //DEBUG
             return 0;
         }
         static int makeReply()
         {
+            logdata += "Вход в makeReply\r\n";                      //DEBUG
             //ИНИЦИАЛИЗАЦИЯ ЛОКАЛЬНЫХ ПЕРЕМЕННЫХ
             EndPoint ep = remoteEP;
             var pack = new ICMP(buffer, buffer.Length);
             var ipfrom = new byte[4];
 
-            logdata += "Вход в makeReply\r\n";
             //ТЕЛО ПРОЦЕДУРЫ
             try
             {
@@ -172,13 +226,13 @@ namespace Ping
                 switch (e.ErrorCode)
                 {
                     case 10060:
-                        logdata += "Время ожидания ответа истекло\r\n";
+                        logdata+="Время ожидания ответа истекло\r\n";
                         break;
                     default:
                         logdata += e.Message + "\r\n";
                         break;
                 }
-                logdata += "Выход из makeReply с кодом 1\r\n";
+                logdata+="Выход из makeReply с кодом 1\r\n";        //DEBUG
                 return 1;
             }
             Buffer.BlockCopy(buffer, 12, ipfrom, 0, 4);
@@ -186,23 +240,16 @@ namespace Ping
                 new IPAddress(ipfrom).ToString(),
                 timer.ElapsedMilliseconds < 1 ? "<1" : timer.ElapsedMilliseconds.ToString());
             timer.Reset();
-            logdata += "Выход из makeReply с кодом 0\r\n";
+            logdata += "Выход из makeReply с кодом 0\r\n";          //DEBUG
             return 0;
         }
         static void Finish() 
         {
-            //logdata += "Finish\r\n";
-            log.writeLog(ref logdata, ref logErrorCode);
-            //Console.ReadKey();
+            Console.WriteLine(logdata);
         }
         static void Diag()
         {
             logdata += String.Format("Причина: ошибка №{0}\r\n", errorCode);
-            //switch (errorCode)
-            {
-                
-
-            }
         }
     }
 }
