@@ -30,10 +30,12 @@ namespace Ping
                     data += "Выход из checkLog с кодом 1\r\n";  //DEBUG
                     return 1;
                 }
+                /*
                 writer = File.Open(Path
                     ,FileMode.Truncate
                     ,FileAccess.Write
                     ,FileShare.Read);
+                */
             }
             catch (Exception e)
             {
@@ -45,23 +47,47 @@ namespace Ping
             data += "Выход из checkLog с кодом 0\r\n";          //DEBUG
             return 0;
         }
-        public int createLog()
+        public int createLog(ref int errorCode)
         {
-            File.CreateText(Path);
+            try
+            {
+                File.CreateText(Path).Close();
+            }
+            catch(Exception e)
+            {
+                errorCode = 1;
+                //data += "Не удалось создать файл\r\n";          //DEBUG
+                return 1;
+            }
             return 0;
         }
         public int writeLog(ref string data, ref int errorCode)
         {
-            //Console.WriteLine(data);
             data += "Запись в файл журнала\r\n";                //DEBUG
-            if (writer == null)
+            try
             {
-                errorCode = 1;
+                writer = File.Open(Path
+                    , FileMode.Truncate
+                    , FileAccess.Write
+                    , FileShare.Read);
+                //writer = new StreamWriter(Path);
+                canWrite = true;
+            }
+            catch(Exception e)
+            {
+                errorCode = 13;
                 return 1;
             }
-            else if ((writer != null && !writer.CanWrite))
+            if (writer == null)
             {
-                errorCode = 1;
+                errorCode = 10;
+                data += "Запись в файл не удалась\r\n";         //DEBUG
+                return 1;
+            }
+            else if ((writer != null && !canWrite))
+            {
+                errorCode = 11;
+                data += "Запись в файл не возможна\r\n";        //DEBUG
                 return 1;
             }
             try

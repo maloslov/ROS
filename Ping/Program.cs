@@ -82,9 +82,29 @@ namespace Ping
                             }                       
                             break;
                         case 1:                              //файл журнала отсутствует
-                            switch (log.createLog())         //создание файла
+                            switch (log.createLog(
+                                ref logErrorCode))           //создание файла
                             {
                                 case 0:                      //файл существует
+                                    for (int i = 0; i < numReq; i++)
+                                    {
+                                        switch (makeRequest())       //отправка запроса
+                                        {
+                                            case 0:                  //успешно отправлен
+                                                switch (makeReply()) //проверка ответа
+                                                {
+                                                    case 0:          //ответ получен
+                                                        break;
+                                                    case 1:          //ошибка при получении
+                                                        Diag();      //диагностика
+                                                        break;
+                                                }
+                                                break;
+                                            case 1:                  //ошибка отправки запроса
+                                                Diag();              //диагностика
+                                                break;
+                                        }
+                                    }
                                     switch (log.writeLog(ref logdata
                                         ,ref logErrorCode))  //запись в журнал
                                     {
@@ -127,7 +147,8 @@ namespace Ping
                             }
                             break;
                         case 1:                               //файл журнала отсутствует
-                            switch (log.createLog())          //создание файла
+                            switch (log.createLog(
+                                ref logErrorCode))            //создание файла
                             {
                                 case 0:                       //файл создан
                                     switch (log.writeLog(ref logdata
@@ -163,7 +184,7 @@ namespace Ping
                 case 0:
                     logdata += "Отсутствует входной параметр\r\n";
                     logdata += "Выход из checkParams с кодом 1\r\n";//DEBUG
-                    errorCode = 2;
+                    errorCode = 1;
                     return 1;
                 case 1:
                     try
@@ -236,7 +257,7 @@ namespace Ping
             }
             catch (SocketException e)
             {
-                errorCode = e.GetHashCode();
+                errorCode = e.ErrorCode;
                 switch (e.ErrorCode)
                 {
                     case 10060:
