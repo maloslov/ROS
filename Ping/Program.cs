@@ -8,7 +8,7 @@ namespace Ping
 {
     class Program
     {
-        //DECLARATION
+        //ДЕКЛАРАЦИЯ ПЕРЕМЕННЫХ
         static string logdata;      //текст для записи
         static Socket socket;       //сокет для приема и передачи
         static ICMP icmp;           //сборщик icmp-сообщений
@@ -17,137 +17,118 @@ namespace Ping
         static Stopwatch timer;     //секундомер
         static Log log;             //журнал
         static int numReq;          //Количество запросов
-        static int outFlag;         //режим вывода: 1-файл, 2-оба("-b"), 3-консоль("-c")
+        static int errorCode;       //переменная для записи ошибок
+        static int logErrorCode;    //ошибки журнала
         
         static void Main(string[] args)
         {
-            //RESTRICTIONS & DEFAULTS
-            logdata = "Start\r\n";
-            remoteEP = null;
-            buffer = new byte[32];
-            icmp = new ICMP();
-            timer = new Stopwatch();
-            log = new Log("c:\\Ping\\ping.log");
-            socket = new Socket(
+            //ИНИЦИАЛИЗАЦИЯ ПЕРЕМЕННЫХ
+            logdata = "";                                   //переменная резульата
+            remoteEP = null;                                //проверяемый хост
+            buffer = new byte[32];                          //буфер для icmp
+            icmp = new ICMP();                              //сборщик icmp
+            timer = new Stopwatch();                        //секундомер для подсчета времени
+            log = new Log("c:\\Ping\\ping.log");            //модуль журнала
+            socket = new Socket(                            //сокет для icmp
                 AddressFamily.InterNetwork,
                 SocketType.Raw,
                 ProtocolType.Icmp);
-            socket.Bind(new IPEndPoint(IPAddress.Any, 0));
-            socket.Ttl = 65;
-            socket.ReceiveTimeout = 1000;
-            numReq = 2;
-            outFlag = 1;
+            socket.Bind(new IPEndPoint(IPAddress.Any, 0));  //привязка адреса сокету
+            socket.Ttl = 65;                                //ТТЛ по умолчанию
+            socket.ReceiveTimeout = 1000;                   //Время ожидания echoReply
+            numReq = 2;                                     //количество запросов
+            errorCode = 0;                                  //код ошибки
+            logErrorCode = 0;                               //код ошибки журнала
 
-            //PROGRAM
-            switch (checkParams(args))
+            //ТЕЛО ПРОГРАММЫ
+            switch (checkParams(args))                      //проверка параметров
             {
-                case 0:
-                    switch (log.checkLog(ref logdata))
+                case 0:                                     //параметры верные
+                    switch (log.checkLog(ref logdata
+                        ,ref logErrorCode))                 //проверка журнала
                     {
-                        case 0:
+                        case 0:                             //журнал существует
                             for (int i = 0; i < numReq; i++)
                             {
-                                switch (makeRequest())
+                                switch (makeRequest())      //отправка запроса
                                 {
-                                    case 0:
-                                        switch (makeReply())
+                                    case 0:                 //успешно отправлен
+                                        switch (makeReply())//проверка ответа
                                         {
-                                            case 0:
+                                            case 0:         //ответ получен
                                                 break;
-                                            case 1:
-                                                Diag();
+                                            case 1:         //ошибка при получении
+                                                Diag();     //диагностика
                                                 break;
                                         }
                                         break;
-                                    case 1:
-                                        Diag();
+                                    case 1:                 //ошибка отправки запроса
+                                        Diag();             //диагностика
                                         break;
                                 }
                             }
+                            Finish();                       //завершение
                             break;
-                        case 1:
-                            log.logDiag();
+                        case 1:                             //ошибка 
+                            log.logDiag(ref logErrorCode);  
+                            Finish();
                             break;
                     }
                     break;
                 case 1:
-                    switch (log.checkLog(ref logdata))
+                    Diag();
+                    switch (log.checkLog(ref logdata, ref logErrorCode))
                     {
+                        case 0:
+                            Finish();
+                            break;
                         case 1:
-                            log.logDiag();
+                            log.logDiag(ref logErrorCode);
+                            Finish();
                             break;
                     }
                     break;
             }
-            Finish();
         }
         static int checkParams(string[] param)
         {
-            int errCount = 0;   //считает ошибки в аргументах
-            Console.WriteLine("Log: {0}", log.Path);
-            logdata += "Enter checkParams\r\n";
+            Console.WriteLine("Файл журнала: {0}", log.Path);
+            logdata += "Вход в checkParams\r\n";
             switch (param.Length)
             {
                 case 0:
-                    logdata += "No IP input\r\nExit checkParams\r\n";
+                    logdata += "Выход из checkParams с кодом 1\r\n";
                     return 1;
-                case 2:
-                    switch (param[1])
-                    {
-                        case "-b":
-                            outFlag = 2;
-                            break;
-                        case "-c":
-                            outFlag = 3;
-                            break;
-                        default:
-                            logdata += "Wrong output flag\r\n";
-                            errCount++;
-                            break;
-                    }
-                    goto case 1;
                 case 1:
-                    switch (param[0])
+                    try
                     {
-                        case "-b":
-                            outFlag = 2;
-                            errCount++;
-                            break;
-                        case "-c":
-                            outFlag = 3;
-                            errCount++;
-                            break;
-                        default:
-                            try
-                            {
-                                IPAddress ip = IPAddress.Parse(param[0]);
-                                if (ip.AddressFamily == AddressFamily.InterNetwork)
-                                    remoteEP = new IPEndPoint(ip, 0);
-                                else throw new FormatException();
-                            }
-                            catch (FormatException)
-                            {
-                                logdata += param[0] + " is wrong IPv4\r\n";
-                                errCount++;
-                            }
-                            break;
+                        IPAddress ip = IPAddress.Parse(param[0]);
+                        if (ip.AddressFamily == AddressFamily.InterNetwork)
+                            remoteEP = new IPEndPoint(ip, 0);
+                        else throw new FormatException();
+                    }
+                    catch (FormatException e)
+                    {
+                        errorCode = e.GetHashCode();
+                        logdata += "Адрес "+param[0] + " не соответствует IPv4\r\n";
+                        logdata += "Выход из checkParams с кодом 1\r\n"; 
+                        return 1;
                     }
                     break;
                 default:
-                    logdata += "Too many args\r\n";
-                    break;
+                    logdata += "Слишком много аргументов\r\n";
+                    logdata += "Выход из checkParams с кодом 1\r\n";
+                    return 1;
             }
             if (remoteEP != null)
-                logdata += String.Format(param[0] + " is correct IPv4\r\n");
-            else logdata += "No IP argument\r\n";
-            if (errCount > 0) { logdata += "Exit checkParams\r\n"; return 1; }
-            logdata += String.Format("TTl={0},Timeout={1}ms\r\n", socket.Ttl, socket.ReceiveTimeout);
-            logdata += "Exit checkParams\r\n";
+                logdata += String.Format(param[0] + " корректный IPv4\r\n");
+            logdata += String.Format("ТТЛ={0},Время ожидания ответа={1}ms\r\n", socket.Ttl, socket.ReceiveTimeout);
+            logdata += "Выход из checkParams с кодом 0\r\n";
             return 0;
         }
         static int makeRequest()
         {
-            logdata += "Enter makeRequest\r\n";
+            logdata += "Вход в makeRequest\r\n";
             timer.Start();
             try
             {
@@ -155,27 +136,31 @@ namespace Ping
             }
             catch (SocketException e)
             {
+                errorCode = e.GetHashCode();
                 switch (e.ErrorCode)
                 {
                     case 10065:
-                        logdata += "Host unreachable\r\n";
+                        logdata += "Недостижимый хост\r\n";
                         break;
                     default:
                         logdata += e.Message+"\r\n";
                         break;
                 }
-                logdata += "Exit makeRequest\r\n";
+                logdata += "Выход из makeRequest с кодом 1\r\n";
                 return 1;
             }
-            logdata += "Request done\r\nExit makeRequest\r\n";
+            logdata += "Запрос отправлен\r\nВыход из makeRequest с кодом\r\n";
             return 0;
         }
         static int makeReply()
         {
-            logdata += "Enter makeReply\r\n";
+            //ИНИЦИАЛИЗАЦИЯ ЛОКАЛЬНЫХ ПЕРЕМЕННЫХ
             EndPoint ep = remoteEP;
             var pack = new ICMP(buffer, buffer.Length);
             var ipfrom = new byte[4];
+
+            logdata += "Вход в makeReply\r\n";
+            //ТЕЛО ПРОЦЕДУРЫ
             try
             {
                 socket.ReceiveFrom(buffer, ref ep);
@@ -183,32 +168,41 @@ namespace Ping
             }
             catch (SocketException e)
             {
+                errorCode = e.GetHashCode();
                 switch (e.ErrorCode)
                 {
                     case 10060:
-                        logdata += "Reply timeout exceeded\r\n";
+                        logdata += "Время ожидания ответа истекло\r\n";
                         break;
                     default:
                         logdata += e.Message + "\r\n";
                         break;
                 }
-                logdata += "Exit makeReply\r\n";
+                logdata += "Выход из makeReply с кодом 1\r\n";
                 return 1;
             }
             Buffer.BlockCopy(buffer, 12, ipfrom, 0, 4);
-            logdata += String.Format("From {0} received by {1} ms\r\n",
+            logdata += String.Format("Ответ {0} получен за {1} мс\r\n",
                 new IPAddress(ipfrom).ToString(),
                 timer.ElapsedMilliseconds < 1 ? "<1" : timer.ElapsedMilliseconds.ToString());
             timer.Reset();
-            logdata += "Reply done\r\nExit makeReply\r\n";
+            logdata += "Выход из makeReply с кодом 0\r\n";
             return 0;
         }
         static void Finish() 
         {
-            logdata += "Finish\r\n";
-            log.writeLog(ref logdata, outFlag);
+            //logdata += "Finish\r\n";
+            log.writeLog(ref logdata, ref logErrorCode);
             //Console.ReadKey();
         }
-        static void Diag() { }
+        static void Diag()
+        {
+            logdata += String.Format("Причина: ошибка №{0}\r\n", errorCode);
+            //switch (errorCode)
+            {
+                
+
+            }
+        }
     }
 }
