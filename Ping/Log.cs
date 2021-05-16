@@ -88,7 +88,7 @@ namespace Ping
         }
         public void logDiag(ref int errorCode, ref string data)
         {
-            data += String.Format("Причина: ошибка №{0}:\r\n", errorCode);
+            data += String.Format("Причина: ошибка №{0} - ", errorCode);
             switch (errorCode)
             {
                 case 11:
