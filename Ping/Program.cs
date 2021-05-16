@@ -82,6 +82,7 @@ namespace Ping
                             }                       
                             break;
                         case 1:                              //файл журнала отсутствует
+                            log.logDiag(ref logErrorCode, ref logdata);
                             switch (log.createLog(
                                 ref logErrorCode))           //создание файла
                             {
