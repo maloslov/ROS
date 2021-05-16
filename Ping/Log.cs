@@ -26,9 +26,8 @@ namespace Ping
             {
                 errorCode = 1;
                 data += "Выход из checkLog с кодом 1\r\n";      //DEBUG
-                return 11;
+                return 1;
             }
-            canWrite = true;
             data += "Выход из checkLog с кодом 0\r\n";          //DEBUG
             return 0;
         }
@@ -36,7 +35,7 @@ namespace Ping
         {
             try
             {
-                File.CreateText(Path).Close();
+                using (File.Create(Path)) { }
             }
             catch(Exception e)
             {
